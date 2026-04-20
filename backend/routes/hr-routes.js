@@ -60,4 +60,73 @@ router.put('/teachers/:teacherId/salary', updateTeacherSalary);
 // ==================== PASSWORD MANAGEMENT ROUTES ====================
 router.post('/hr-managers/regenerate-passwords', regenerateHRManagerPasswords);
 
+// ==================== PROFILE ROUTES ====================
+router.get('/profile', async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await require('../lib/prisma').user.findUnique({
+            where: { id: userId },
+            include: {
+                HRManagerProfile: true,
+            },
+        });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                name: user.name,
+                email: user.email,
+                phone: user.HRManagerProfile?.phone || '',
+                designation: user.HRManagerProfile?.designation || 'HR Manager',
+                department: user.HRManagerProfile?.department || 'Human Resources',
+                employeeId: user.HRManagerProfile?.employeeId || 'N/A',
+            },
+        });
+    } catch (error) {
+        console.error('Error fetching HR profile:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch profile' });
+    }
+});
+
+router.put('/profile', async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { name, phone, designation, department } = req.body;
+
+        // Update user name
+        await require('../lib/prisma').user.update({
+            where: { id: userId },
+            data: { name },
+        });
+
+        // Update HR Manager profile
+        const hrProfile = await require('../lib/prisma').hRManagerProfile.findFirst({
+            where: { userId },
+        });
+
+        if (hrProfile) {
+            await require('../lib/prisma').hRManagerProfile.update({
+                where: { id: hrProfile.id },
+                data: {
+                    phone,
+                    designation,
+                    department,
+                },
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+        });
+    } catch (error) {
+        console.error('Error updating HR profile:', error);
+        res.status(500).json({ success: false, message: 'Failed to update profile' });
+    }
+});
+
 module.exports = router;

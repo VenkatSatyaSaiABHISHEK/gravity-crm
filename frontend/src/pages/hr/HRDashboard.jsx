@@ -26,6 +26,7 @@ import {
   BarChart as ReportsIcon,
   SmartToy as AIIcon,
   Logout as LogoutIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { employees as initialEmployees } from '../../data/hr-data/employees';
 import { attendanceRecords } from '../../data/hr-data/attendance';
@@ -187,6 +188,38 @@ function HRDashboard() {
 
         {/* Sidebar Footer */}
         <Box sx={{ p: 1.5 }}>
+          <ListItem
+            onClick={() => window.location.href = '/hr/profile'}
+            sx={{
+              borderRadius: '10px',
+              cursor: 'pointer',
+              transition: 'all 0.25s ease',
+              py: 1.2,
+              mb: 1,
+              bgcolor: 'rgba(255,255,255,0.08)',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.15)',
+              },
+            }}
+            component="div"
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 40,
+                color: '#81C784',
+              }}
+            >
+              <PersonIcon sx={{ fontSize: 22 }} />
+            </ListItemIcon>
+            <ListItemText
+              primary="Profile"
+              primaryTypographyProps={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#81C784',
+              }}
+            />
+          </ListItem>
           <ListItem
             onClick={() => {
               localStorage.removeItem('token');

@@ -111,6 +111,7 @@ import ParentAIDashboard from './pages/ai/ParentAIDashboard';
 
 // HR Portal
 import HRDashboard from './pages/hr/HRDashboard';
+import HRProfile from './pages/hr/HRProfile';
 
 import DevTestPage from './pages/DevTestPage';
 
@@ -482,6 +483,10 @@ function App() {
           <Route
             path="/hr/dashboard"
             element={<ProtectedRoute allowedRoles={["HRTeam", "Admin", "SuperAdmin"]} element={<HRDashboard />} />}
+          />
+          <Route
+            path="/hr/profile"
+            element={<ProtectedRoute allowedRoles={["HRTeam", "Admin", "SuperAdmin"]} element={<HRProfile />} />}
           />
 
           <Route
