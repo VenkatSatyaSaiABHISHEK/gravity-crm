@@ -28,7 +28,6 @@ import {
   Logout as LogoutIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import { employees as initialEmployees } from '../../data/hr-data/employees';
 import { attendanceRecords } from '../../data/hr-data/attendance';
 import EmployeeManagement from './sections/EmployeeManagement';
 import AttendanceManagement from './sections/AttendanceManagement';

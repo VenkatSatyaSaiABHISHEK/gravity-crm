@@ -11,7 +11,6 @@ import {
   Button,
   Alert,
   CircularProgress,
-  Divider,
   Paper,
   IconButton,
 } from '@mui/material';
@@ -46,6 +45,7 @@ const HRProfile = () => {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchProfile = async () => {
