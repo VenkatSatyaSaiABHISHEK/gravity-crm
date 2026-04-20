@@ -1,0 +1,347 @@
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+    Box, Paper, Typography, Button, Table, TableBody, TableCell,
+    TableContainer, TableHead, TableRow, TablePagination, TextField,
+    InputAdornment, Chip, IconButton, Dialog, DialogTitle,
+    DialogContent, DialogActions, Grid, CircularProgress, Tooltip, MenuItem, Select, InputLabel, FormControl
+} from '@mui/material';
+import {
+    Search as SearchIcon, Add as AddIcon, Edit as EditIcon,
+    Delete as DeleteIcon, Refresh as RefreshIcon, Visibility as VisibilityIcon
+} from '@mui/icons-material';
+import DashboardLayout from '../../components/DashboardLayout';
+import { fetchStudents, createStudent, fetchClasses, updateStudent, deleteStudent } from '../../redux/slices/adminSlice';
+import BulkStudentImportDialog from '../../components/admin/BulkStudentImportDialog';
+import StudentDetailsModal from '../../components/admin/StudentDetailsModal';
+
+const AdminStudents = () => {
+    const dispatch = useDispatch();
+    const { students, classes, loading } = useSelector((state) => state.admin);
+
+    // Table State
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Dialog State
+    const [openAddDialog, setOpenAddDialog] = useState(false);
+    const [openEditDialog, setOpenEditDialog] = useState(false);
+    const [openImportDialog, setOpenImportDialog] = useState(false);
+    const [openViewDialog, setOpenViewDialog] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState(null);
+    const [newStudent, setNewStudent] = useState({
+        name: '', studentId: '', email: '', phone: '', password: '',
+        sclassId: '', parentName: '', parentPhone: ''
+    });
+
+    const [editStudent, setEditStudent] = useState({
+        id: '',
+        name: '',
+        studentId: '',
+        email: '',
+        phone: '',
+        sclassId: '',
+        parentName: '',
+        parentPhone: ''
+    });
+
+    useEffect(() => {
+        dispatch(fetchStudents());
+        dispatch(fetchClasses());
+    }, [dispatch]);
+
+    const handleChangePage = (event, newPage) => setPage(newPage);
+    const handleChangeRowsPerPage = (event) => { setRowsPerPage(parseInt(event.target.value, 10)); setPage(0); };
+    const handleSearch = (event) => { setSearchTerm(event.target.value); setPage(0); };
+
+    const handleAddSubmit = (e) => {
+        e.preventDefault();
+        dispatch(createStudent(newStudent)).then((res) => {
+            if (!res.error) {
+                setOpenAddDialog(false);
+                setNewStudent({ name: '', studentId: '', email: '', phone: '', password: '', sclassId: '', parentName: '', parentPhone: '' });
+                dispatch(fetchStudents());
+            }
+        });
+    };
+
+    const handleEditOpen = (student) => {
+        setEditStudent({
+            id: student.id,
+            name: student.name || '',
+            studentId: student.studentId || '',
+            email: student.email || '',
+            phone: student.phone || '',
+            sclassId: student.sclassId || student.sclass?.id || '',
+            parentName: student.parentName || '',
+            parentPhone: student.parentPhone || ''
+        });
+        setOpenEditDialog(true);
+    };
+
+    const handleEditSubmit = (e) => {
+        e.preventDefault();
+        const { id, ...data } = editStudent;
+        dispatch(updateStudent({ id, data })).then((res) => {
+            if (!res.error) {
+                setOpenEditDialog(false);
+                dispatch(fetchStudents());
+            }
+        });
+    };
+
+    const handleDelete = (student) => {
+        if (!student?.id) return;
+        const ok = window.confirm(`Delete student ${student.studentId || ''} (${student.name || ''})?`);
+        if (!ok) return;
+        dispatch(deleteStudent(student.id)).then((res) => {
+            if (!res.error) {
+                dispatch(fetchStudents());
+            }
+        });
+    };
+
+    const handleViewDetails = (student) => {
+        setSelectedStudent(student);
+        setOpenViewDialog(true);
+    };
+
+    const filteredStudents = students?.filter((student) =>
+        student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.studentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
+
+    const paginatedStudents = filteredStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+    return (
+        <DashboardLayout role="admin">
+            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                    Student Directory
+                </Typography>
+                <Box>
+                    <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => dispatch(fetchStudents())} sx={{ mr: 2 }}>
+                        Refresh
+                    </Button>
+                    <Button variant="outlined" onClick={() => setOpenImportDialog(true)} sx={{ mr: 2 }}>
+                        Import CSV
+                    </Button>
+                    <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => setOpenAddDialog(true)}>
+                        Admit Student
+                    </Button>
+                </Box>
+            </Box>
+
+            <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: 3, borderRadius: 2 }}>
+                <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center', borderBottom: '1px solid #eee' }}>
+                    <TextField
+                        variant="outlined"
+                        placeholder="Search by name, email, or roll number..."
+                        value={searchTerm}
+                        onChange={handleSearch}
+                        size="small"
+                        sx={{ width: 400 }}
+                        InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon color="action" /></InputAdornment> }}
+                    />
+                    {loading && <CircularProgress size={24} sx={{ ml: 2 }} />}
+                </Box>
+
+                <TableContainer sx={{ maxHeight: 600 }}>
+                    <Table stickyHeader>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8f9fa' }}>Student ID / Roll No</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8f9fa' }}>Name</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8f9fa' }}>Class</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8f9fa' }}>Section</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8f9fa' }}>Contact</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8f9fa' }}>Parent Info</TableCell>
+                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8f9fa', textAlign: 'center' }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {paginatedStudents.length === 0 && !loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} align="center" sx={{ py: 3 }}>No students found.</TableCell>
+                                </TableRow>
+                            ) : (
+                                paginatedStudents.map((student) => (
+                                    <TableRow hover key={student.id}>
+                                        <TableCell>
+                                            <Chip label={student.studentId} size="small" variant="filled" color="default" sx={{ fontWeight: 700 }} />
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>{student.name}</TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">{student.sclass?.sclassName || 'N/A'}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">{student.section?.sectionName || 'N/A'}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">{student.email}</Typography>
+                                            <Typography variant="caption" color="text.secondary">{student.phone}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">{student.parentName || 'N/A'}</Typography>
+                                            <Typography variant="caption" color="text.secondary">{student.parentPhone}</Typography>
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <Tooltip title="View Details">
+                                                <IconButton color="info" size="small" onClick={() => handleViewDetails(student)}><VisibilityIcon fontSize="small" /></IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Edit Student">
+                                                <IconButton color="primary" size="small" onClick={() => handleEditOpen(student)}><EditIcon fontSize="small" /></IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Delete Student">
+                                                <IconButton color="error" size="small" onClick={() => handleDelete(student)}><DeleteIcon fontSize="small" /></IconButton>
+                                            </Tooltip>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                <TablePagination
+                    rowsPerPageOptions={[5, 10, 25, 50]}
+                    component="div"
+                    count={filteredStudents.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+            </Paper>
+
+            {/* Add Student Dialog */}
+            <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)} maxWidth="md" fullWidth>
+                <form onSubmit={handleAddSubmit}>
+                    <DialogTitle sx={{ fontWeight: 'bold' }}>New Student Admission</DialogTitle>
+                    <DialogContent dividers>
+                        <Grid container spacing={2}>
+                            {/* Student Details */}
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>Student Information</Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Full Name" fullWidth required value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Student ID / Roll No" fullWidth required value={newStudent.studentId} onChange={(e) => setNewStudent({ ...newStudent, studentId: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Email" type="email" fullWidth required value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Contact Number" fullWidth value={newStudent.phone} onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth required>
+                                    <InputLabel>Class</InputLabel>
+                                    <Select
+                                        value={newStudent.sclassId}
+                                        onChange={(e) => setNewStudent({ ...newStudent, sclassId: e.target.value })}
+                                        label="Class"
+                                    >
+                                        {classes?.map((cls) => (
+                                            <MenuItem key={cls.id} value={cls.id}>{cls.sclassName}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Temporary Login Password" type="password" fullWidth required value={newStudent.password} onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })} />
+                            </Grid>
+
+                            {/* Parent Details */}
+                            <Grid item xs={12} sx={{ mt: 2 }}>
+                                <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>Parent/Guardian Information</Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Parent/Guardian Name" fullWidth required value={newStudent.parentName} onChange={(e) => setNewStudent({ ...newStudent, parentName: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Parent Contact Number" fullWidth required value={newStudent.parentPhone} onChange={(e) => setNewStudent({ ...newStudent, parentPhone: e.target.value })} />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions sx={{ p: 2 }}>
+                        <Button onClick={() => setOpenAddDialog(false)} color="inherit">Cancel</Button>
+                        <Button type="submit" variant="contained" disabled={loading}>
+                            {loading ? 'Admitting...' : 'Complete Admission'}
+                        </Button>
+                    </DialogActions>
+                </form>
+            </Dialog>
+
+            {/* Edit Student Dialog */}
+            <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="md" fullWidth>
+                <form onSubmit={handleEditSubmit}>
+                    <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Student</DialogTitle>
+                    <DialogContent dividers>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>Student Information</Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Full Name" fullWidth required value={editStudent.name} onChange={(e) => setEditStudent({ ...editStudent, name: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Student ID / Roll No" fullWidth required value={editStudent.studentId} onChange={(e) => setEditStudent({ ...editStudent, studentId: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Email" type="email" fullWidth value={editStudent.email} onChange={(e) => setEditStudent({ ...editStudent, email: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Contact Number" fullWidth value={editStudent.phone} onChange={(e) => setEditStudent({ ...editStudent, phone: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel>Class</InputLabel>
+                                    <Select
+                                        value={editStudent.sclassId}
+                                        onChange={(e) => setEditStudent({ ...editStudent, sclassId: e.target.value })}
+                                        label="Class"
+                                    >
+                                        {classes?.map((cls) => (
+                                            <MenuItem key={cls.id} value={cls.id}>{cls.sclassName}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            <Grid item xs={12} sx={{ mt: 2 }}>
+                                <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>Parent/Guardian Information</Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Parent/Guardian Name" fullWidth value={editStudent.parentName} onChange={(e) => setEditStudent({ ...editStudent, parentName: e.target.value })} />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField label="Parent Contact Number" fullWidth value={editStudent.parentPhone} onChange={(e) => setEditStudent({ ...editStudent, parentPhone: e.target.value })} />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions sx={{ p: 2 }}>
+                        <Button onClick={() => setOpenEditDialog(false)} color="inherit">Cancel</Button>
+                        <Button type="submit" variant="contained" disabled={loading}>
+                            {loading ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    </DialogActions>
+                </form>
+            </Dialog>
+
+            <BulkStudentImportDialog open={openImportDialog} onClose={() => setOpenImportDialog(false)} />
+            
+            {/* Student Details Modal */}
+            <StudentDetailsModal 
+                open={openViewDialog} 
+                onClose={() => setOpenViewDialog(false)} 
+                student={selectedStudent} 
+            />
+        </DashboardLayout>
+    );
+};
+
+export default AdminStudents;
