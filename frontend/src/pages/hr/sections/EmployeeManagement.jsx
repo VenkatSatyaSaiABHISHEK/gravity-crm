@@ -34,7 +34,6 @@ import {
   Upload as UploadIcon,
   CloudUpload as CloudUploadIcon,
   Calculate as CalculateIcon,
-  Info as InfoIcon,
 } from '@mui/icons-material';
 import { departments, designations } from '../../../data/hr-data/employees';
 import { SalaryCalculationService } from '../../../services/salaryCalculation';
@@ -47,7 +46,6 @@ import {
   importEmployeesFromCSV,
   selectEmployees,
   selectAttendance,
-  selectHRLoading,
   selectHRError,
   selectImportStatus,
   clearError,
@@ -60,7 +58,6 @@ const EmployeeManagement = ({ isHRRole = false }) => {
   // Redux state
   const employees = useSelector(selectEmployees);
   const attendance = useSelector(selectAttendance);
-  const loading = useSelector(selectHRLoading);
   const error = useSelector(selectHRError);
   const importStatus = useSelector(selectImportStatus);
 
