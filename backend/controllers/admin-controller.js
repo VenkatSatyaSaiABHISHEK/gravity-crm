@@ -418,29 +418,6 @@ const getAllStudents = async (req, res) => {
             return res.status(400).json({ success: false, message: 'College ID required' });
         }
 
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo students data');
-            const { demoData } = require('../utils/demo-data');
-            
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: demoData.students.map(s => ({
-                    ...s,
-                    sclass: demoData.classes.find(c => c.id === s.sclassId),
-                    isDeleted: false,
-                    isActive: true
-                })),
-                pagination: {
-                    total: demoData.students.length,
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    pages: Math.ceil(demoData.students.length / limit)
-                }
-            });
-        }
-
         const skip = (page - 1) * limit;
         const filter = { collegeId, isDeleted: false };
 
@@ -494,31 +471,6 @@ const getAllTeachers = async (req, res) => {
 
         if (!collegeId) {
             return res.status(400).json({ success: false, message: 'College ID required' });
-        }
-
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo teachers data');
-            const { demoData } = require('../utils/demo-data');
-            
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: demoData.teachers.map(t => ({
-                    ...t,
-                    isActive: true,
-                    qualification: 'M.Sc., B.Ed',
-                    Subjects: demoData.subjects.filter(s => s.teacherId === t.id),
-                    ClassTeacherOf: demoData.classes.filter(c => c.classTeacherId === t.id),
-                    createdAt: new Date('2026-01-01')
-                })),
-                pagination: {
-                    total: demoData.teachers.length,
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    pages: Math.ceil(demoData.teachers.length / limit)
-                }
-            });
         }
 
         const skip = (page - 1) * limit;
@@ -718,31 +670,6 @@ const getAllClasses = async (req, res) => {
             return res.status(400).json({ success: false, message: 'College ID required' });
         }
 
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo classes data');
-            const { demoData } = require('../utils/demo-data');
-            
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: demoData.classes.map(c => ({
-                    ...c,
-                    createdAt: new Date('2026-01-01'),
-                    _count: {
-                        Students: c.studentCount || 0,
-                        Subjects: demoData.subjects.filter(s => s.sclassId === c.id).length
-                    }
-                })),
-                pagination: {
-                    total: demoData.classes.length,
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    pages: Math.ceil(demoData.classes.length / limit)
-                }
-            });
-        }
-
         const skip = (page - 1) * limit;
 
         const classes = await prisma.sclass.findMany({
@@ -853,30 +780,6 @@ const getSubjects = async (req, res) => {
 
         if (!collegeId) {
             return res.status(400).json({ success: false, message: 'College ID required' });
-        }
-
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo subjects data');
-            const { demoData } = require('../utils/demo-data');
-            
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: demoData.subjects.map(s => ({
-                    ...s,
-                    description: `${s.subName} course for students`,
-                    passingMarks: 40,
-                    createdAt: new Date('2026-01-01'),
-                    sclass: demoData.classes.find(c => c.id === s.sclassId),
-                    teacher: demoData.teachers.find(t => t.id === s.teacherId)
-                })),
-                pagination: {
-                    total: demoData.subjects.length,
-                    page: parseInt(page),
-                    limit: parseInt(limit)
-                }
-            });
         }
 
         const skip = (page - 1) * limit;
@@ -1028,167 +931,7 @@ const getDashboard = async (req, res) => {
             return res.status(400).json({ success: false, message: 'College ID required' });
         }
 
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo dashboard data');
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: {
-                    college: {
-                        id: 'demo-college-001',
-                        name: 'GVPLACEMENT Demo College',
-                        description: 'Demo Educational Institution',
-                        email: 'admin@gvplacement.demo',
-                        phone: '+91 9876543210',
-                        address: '123 Education Street',
-                        city: 'Demo City',
-                        state: 'Demo State',
-                        country: 'India',
-                        pincode: '123456'
-                    },
-                    stats: {
-                        students: 245,
-                        teachers: 18,
-                        classes: 12,
-                        revenue: 2450000,
-                        pendingAdmissions: 8,
-                    },
-                    recentPayments: [
-                        {
-                            id: '1',
-                            amount: 50000,
-                            createdAt: new Date('2026-04-20'),
-                            student: { id: '1', name: 'Priya Sharma', studentId: 'STU002' }
-                        },
-                        {
-                            id: '2',
-                            amount: 25000,
-                            createdAt: new Date('2026-04-19'),
-                            student: { id: '2', name: 'Rahul Verma', studentId: 'STU011' }
-                        },
-                        {
-                            id: '3',
-                            amount: 30000,
-                            createdAt: new Date('2026-04-18'),
-                            student: { id: '3', name: 'Isha Reddy', studentId: 'STU008' }
-                        },
-                        {
-                            id: '4',
-                            amount: 22000,
-                            createdAt: new Date('2026-04-17'),
-                            student: { id: '4', name: 'Sakshi Nair', studentId: 'STU012' }
-                        },
-                        {
-                            id: '5',
-                            amount: 28000,
-                            createdAt: new Date('2026-04-16'),
-                            student: { id: '5', name: 'Neha Gupta', studentId: 'STU004' }
-                        }
-                    ],
-                    revenueByMonth: [
-                        { month: 'Nov', year: 2025, revenue: 380000 },
-                        { month: 'Dec', year: 2025, revenue: 420000 },
-                        { month: 'Jan', year: 2026, revenue: 450000 },
-                        { month: 'Feb', year: 2026, revenue: 390000 },
-                        { month: 'Mar', year: 2026, revenue: 480000 },
-                        { month: 'Apr', year: 2026, revenue: 330000 }
-                    ],
-                    admissionsByStatus: [
-                        { status: 'Approved', value: 156 },
-                        { status: 'Pending', value: 8 },
-                        { status: 'Rejected', value: 12 }
-                    ],
-                    studentsByClass: [
-                        { classId: '1', className: '11th Science', students: 32 },
-                        { classId: '2', className: '11th Commerce', students: 28 },
-                        { classId: '3', className: '11th Arts', students: 24 },
-                        { classId: '4', className: '12th Science', students: 30 },
-                        { classId: '5', className: '12th Commerce', students: 26 },
-                        { classId: '6', className: '12th Arts', students: 22 },
-                        { classId: '7', className: '10th Grade', students: 35 },
-                        { classId: '8', className: '9th Grade', students: 33 },
-                        { classId: '9', className: '8th Grade', students: 15 }
-                    ],
-                    subjectPerformance: [
-                        { subject: 'Mathematics', percentage: 87, change: '+5%', color: '#43e97b', changeColor: '#43e97b', hasData: true, resultCount: 145 },
-                        { subject: 'Physics', percentage: 82, change: '+3%', color: '#43e97b', changeColor: '#43e97b', hasData: true, resultCount: 132 },
-                        { subject: 'Chemistry', percentage: 79, change: '+2%', color: '#4facfe', changeColor: '#43e97b', hasData: true, resultCount: 128 },
-                        { subject: 'Biology', percentage: 85, change: '+4%', color: '#43e97b', changeColor: '#43e97b', hasData: true, resultCount: 98 },
-                        { subject: 'English', percentage: 76, change: '+1%', color: '#4facfe', changeColor: '#43e97b', hasData: true, resultCount: 245 },
-                        { subject: 'Computer Science', percentage: 91, change: '+7%', color: '#43e97b', changeColor: '#43e97b', hasData: true, resultCount: 87 },
-                        { subject: 'Economics', percentage: 73, change: '+2%', color: '#4facfe', changeColor: '#43e97b', hasData: true, resultCount: 76 },
-                        { subject: 'History', percentage: 68, change: '-1%', color: '#feca57', changeColor: '#f5576c', hasData: true, resultCount: 54 }
-                    ],
-                    feeManagement: {
-                        totalDues: 12250000,
-                        totalCollected: 9800000,
-                        totalPending: 2450000,
-                        overallCollectionRate: 80,
-                        overdueStudents: 15,
-                        feeCollectionByClass: [
-                            { className: '12th Science', totalDues: 1500000, collected: 1350000, pending: 150000, collectionRate: 90, studentCount: 30 },
-                            { className: '11th Science', totalDues: 1600000, collected: 1280000, pending: 320000, collectionRate: 80, studentCount: 32 },
-                            { className: '12th Commerce', totalDues: 1300000, collected: 1170000, pending: 130000, collectionRate: 90, studentCount: 26 },
-                            { className: '11th Commerce', totalDues: 1400000, collected: 1050000, pending: 350000, collectionRate: 75, studentCount: 28 },
-                            { className: '10th Grade', totalDues: 1750000, collected: 1400000, pending: 350000, collectionRate: 80, studentCount: 35 }
-                        ],
-                        recentFees: [
-                            {
-                                id: '1',
-                                amount: 50000,
-                                dueDate: new Date('2026-05-15'),
-                                feeType: 'Tuition Fee',
-                                student: { id: '1', name: 'Priya Sharma', studentId: 'STU002', sclass: { sclassName: '11th Science' } },
-                                paidAmount: 50000,
-                                dueAmount: 0,
-                                status: 'paid'
-                            },
-                            {
-                                id: '2',
-                                amount: 25000,
-                                dueDate: new Date('2026-05-15'),
-                                feeType: 'Lab Fee',
-                                student: { id: '2', name: 'Rahul Verma', studentId: 'STU011', sclass: { sclassName: '11th Science' } },
-                                paidAmount: 25000,
-                                dueAmount: 0,
-                                status: 'paid'
-                            },
-                            {
-                                id: '3',
-                                amount: 30000,
-                                dueDate: new Date('2026-05-15'),
-                                feeType: 'Tuition Fee',
-                                student: { id: '3', name: 'Isha Reddy', studentId: 'STU008', sclass: { sclassName: '12th Commerce' } },
-                                paidAmount: 15000,
-                                dueAmount: 15000,
-                                status: 'pending'
-                            },
-                            {
-                                id: '4',
-                                amount: 22000,
-                                dueDate: new Date('2026-04-30'),
-                                feeType: 'Sports Fee',
-                                student: { id: '4', name: 'Sakshi Nair', studentId: 'STU012', sclass: { sclassName: '10th Grade' } },
-                                paidAmount: 0,
-                                dueAmount: 22000,
-                                status: 'overdue'
-                            },
-                            {
-                                id: '5',
-                                amount: 28000,
-                                dueDate: new Date('2026-05-20'),
-                                feeType: 'Transport Fee',
-                                student: { id: '5', name: 'Neha Gupta', studentId: 'STU004', sclass: { sclassName: '11th Arts' } },
-                                paidAmount: 0,
-                                dueAmount: 28000,
-                                status: 'pending'
-                            }
-                        ]
-                    }
-                }
-            });
-        }
+
 
         // Run all queries in parallel for better performance
         const [
@@ -1551,33 +1294,6 @@ const getFees = async (req, res) => {
         
         if (!collegeId) {
             return res.status(400).json({ success: false, message: 'College ID required' });
-        }
-
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo fees data');
-            const { demoData } = require('../utils/demo-data');
-            
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: demoData.fees.map(f => ({
-                    ...f,
-                    feeCategory: 'Academic',
-                    frequency: 'Annual',
-                    createdAt: new Date('2026-01-01'),
-                    student: {
-                        ...demoData.students.find(s => s.id === f.studentId),
-                        sclass: { sclassName: demoData.classes.find(c => c.id === demoData.students.find(s => s.id === f.studentId)?.sclassId)?.sclassName }
-                    }
-                })),
-                pagination: {
-                    total: demoData.fees.length,
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    pages: Math.ceil(demoData.fees.length / limit)
-                }
-            });
         }
 
         const skip = (page - 1) * limit;
@@ -3221,17 +2937,7 @@ const getNotices = async (req, res) => {
             return res.status(400).json({ success: false, message: 'College ID required' });
         }
 
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo notices data');
-            const { demoData } = require('../utils/demo-data');
-            
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: demoData.notices
-            });
-        }
+
 
         const filter = { collegeId };
         if (active === 'true') filter.isActive = true;
@@ -3428,22 +3134,6 @@ const listExams = async (req, res) => {
     try {
         const collegeId = req.collegeId;
         const { sclassId } = req.query;
-
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo exams data');
-            
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: [
-                    { id: '1', examName: 'Mid-term Exam', examType: 'Mid-term', sclassId: '1', maxMarks: 100, passingMarks: 40, examDate: new Date('2026-03-15'), createdAt: new Date('2026-03-01') },
-                    { id: '2', examName: 'Final Exam', examType: 'Final', sclassId: '1', maxMarks: 100, passingMarks: 40, examDate: new Date('2026-05-20'), createdAt: new Date('2026-05-01') },
-                    { id: '3', examName: 'Unit Test 1', examType: 'Unit Test', sclassId: '2', maxMarks: 50, passingMarks: 20, examDate: new Date('2026-02-10'), createdAt: new Date('2026-02-01') },
-                    { id: '4', examName: 'Unit Test 2', examType: 'Unit Test', sclassId: '2', maxMarks: 50, passingMarks: 20, examDate: new Date('2026-04-10'), createdAt: new Date('2026-04-01') }
-                ]
-            });
-        }
 
         const filter = { collegeId };
         if (sclassId) filter.sclassId = String(sclassId);
@@ -3669,28 +3359,7 @@ const getComplaints = async (req, res) => {
             return res.status(400).json({ success: false, message: 'College ID required' });
         }
 
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo complaints data');
-            const { demoData } = require('../utils/demo-data');
-            
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: demoData.complaints.map(c => ({
-                    ...c,
-                    student: demoData.students.find(s => s.id === c.studentId),
-                    parent: null,
-                    teacher: null
-                })),
-                pagination: {
-                    total: demoData.complaints.length,
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    pages: Math.ceil(demoData.complaints.length / limit)
-                }
-            });
-        }
+
 
         const skip = (page - 1) * limit;
         const filter = { collegeId };

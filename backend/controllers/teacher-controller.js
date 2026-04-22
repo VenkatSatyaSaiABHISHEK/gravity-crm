@@ -113,48 +113,6 @@ const getMyClasses = async (req, res) => {
         const teacherId = req.user.id;
         const collegeId = req.collegeId;
 
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo teacher classes data');
-            const { demoData } = require('../utils/demo-data');
-            
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: [
-                    {
-                        id: '1',
-                        sclassName: '11th Science',
-                        collegeId: 'demo-college-001',
-                        classTeacherId: 'demo-teacher-001',
-                        Subjects: [
-                            { id: '1', subName: 'Mathematics', subCode: 'MATH101', teacherId: 'demo-teacher-001' },
-                            { id: '2', subName: 'Physics', subCode: 'PHY101', teacherId: 'demo-teacher-001' }
-                        ],
-                        classTeacher: { id: 'demo-teacher-001', name: 'Mr. Rajesh Kumar' },
-                        Sections: [
-                            { id: '1', sectionName: 'Section A' }
-                        ],
-                        _count: { Students: 32 }
-                    },
-                    {
-                        id: '2',
-                        sclassName: '12th Science',
-                        collegeId: 'demo-college-001',
-                        classTeacherId: null,
-                        Subjects: [
-                            { id: '9', subName: 'Advanced Mathematics', subCode: 'MATH201', teacherId: 'demo-teacher-001' }
-                        ],
-                        classTeacher: null,
-                        Sections: [
-                            { id: '4', sectionName: 'Section A' }
-                        ],
-                        _count: { Students: 30 }
-                    }
-                ]
-            });
-        }
-
         const teacher = await prisma.teacher.findUnique({
             where: { userId: teacherId },
         });
@@ -1734,87 +1692,21 @@ const getDashboard = async (req, res) => {
         const teacherId = req.user.id;
         const collegeId = req.collegeId;
 
-        // Demo mode response
-        if (req.demoMode) {
-            console.log('🎯 Demo mode: Returning demo teacher dashboard data');
-            return res.status(200).json({
-                success: true,
-                demo: true,
-                data: {
-                    teacher: {
-                        id: 'demo-teacher-001',
-                        name: 'Mr. Rajesh Kumar',
-                        email: 'teacher1@demo.com',
-                        specialization: 'Mathematics',
-                        experience: 5,
-                        phone: '+91 9876543210',
-                        address: '456 Teacher Colony',
-                        isActive: true,
-                        ClassTeacherOf: [
-                            { id: '1', sclassName: '11th Science' }
-                        ],
-                        Subjects: [
-                            { id: '1', subName: 'Mathematics', subCode: 'MATH101', maxMarks: 100, sclassId: '1' },
-                            { id: '2', subName: 'Physics', subCode: 'PHY101', maxMarks: 100, sclassId: '1' },
-                            { id: '3', subName: 'Statistics', subCode: 'STAT101', maxMarks: 100, sclassId: '2' }
-                        ]
-                    },
-                    stats: {
-                        classes: 2,
-                        subjects: 3,
-                        totalStudents: 58,
-                        homeworkCount: 12,
-                    },
-                    recentHomework: [
-                        {
-                            id: '1',
-                            title: 'Algebra Problems Set 1',
-                            description: 'Complete exercises 1-15 from Chapter 3',
-                            dueDate: new Date('2026-04-25'),
-                            createdAt: new Date('2026-04-20'),
-                            subjectName: 'Mathematics'
-                        },
-                        {
-                            id: '2',
-                            title: 'Physics Lab Report',
-                            description: 'Submit pendulum experiment report',
-                            dueDate: new Date('2026-04-26'),
-                            createdAt: new Date('2026-04-19'),
-                            subjectName: 'Physics'
-                        },
-                        {
-                            id: '3',
-                            title: 'Trigonometry Assignment',
-                            description: 'Solve problems from Chapter 5',
-                            dueDate: new Date('2026-04-28'),
-                            createdAt: new Date('2026-04-18'),
-                            subjectName: 'Mathematics'
-                        },
-                        {
-                            id: '4',
-                            title: 'Statistics Project',
-                            description: 'Data collection and analysis project',
-                            dueDate: new Date('2026-04-30'),
-                            createdAt: new Date('2026-04-17'),
-                            subjectName: 'Statistics'
-                        },
-                        {
-                            id: '5',
-                            title: 'Calculus Practice',
-                            description: 'Integration and differentiation problems',
-                            dueDate: new Date('2026-05-02'),
-                            createdAt: new Date('2026-04-16'),
-                            subjectName: 'Mathematics'
-                        }
-                    ]
-                }
-            });
-        }
-
         const teacher = await prisma.teacher.findUnique({
-            where: { userId: teacherId },
+            where: { userId: req.user.id },
             include: {
+                Subjects: {
+                    include: {
+                        sclass: true,
+                    },
+                },
                 ClassTeacherOf: true,
+                _count: {
+                    select: {
+                        Subjects: true,
+                        Homeworks: true,
+                    },
+                },
             },
         });
 
@@ -1822,46 +1714,9 @@ const getDashboard = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Teacher not found' });
         }
 
-        // Subjects shown in teacher UI should include:
-        // - Subjects explicitly assigned to teacher
-        // - Subjects in classes where teacher is the class teacher
-        // This prevents empty subject dropdowns when Admin sets only class-teacher mapping.
-        const subjects = await prisma.subject.findMany({
+        // Get stats
+        const classes = await prisma.sclass.count({
             where: {
-                collegeId,
-                OR: [
-                    { teacherId: teacher.id },
-                    { sclass: { is: { classTeacherId: teacher.id } } },
-                ],
-            },
-            orderBy: [{ sclassId: 'asc' }, { subName: 'asc' }],
-        });
-
-        // Get total students
-        const totalStudents = await prisma.student.count({
-            where: {
-                sclass: {
-                    Subjects: {
-                        some: { teacherId: teacher.id },
-                    },
-                },
-            },
-        });
-
-        // Get recent homework
-        const recentHomework = await prisma.homework.findMany({
-            where: {
-                teacherId: teacher.id,
-                collegeId,
-            },
-            take: 5,
-            orderBy: { createdAt: 'desc' },
-        });
-
-        // Get classes
-        const classes = await prisma.sclass.findMany({
-            where: {
-                collegeId,
                 OR: [
                     { classTeacherId: teacher.id },
                     { Subjects: { some: { teacherId: teacher.id } } },
@@ -1869,20 +1724,31 @@ const getDashboard = async (req, res) => {
             },
         });
 
+        const students = await prisma.student.count({
+            where: {
+                sclass: {
+                    OR: [
+                        { classTeacherId: teacher.id },
+                        { Subjects: { some: { teacherId: teacher.id } } },
+                    ],
+                },
+            },
+        });
+
+        const homeworkCount = await prisma.homework.count({
+            where: { teacherId: teacher.id },
+        });
+
         res.status(200).json({
             success: true,
             data: {
-                teacher: {
-                    ...teacher,
-                    Subjects: subjects,
-                },
+                teacher,
                 stats: {
-                    classes: classes.length,
-                    subjects: subjects.length,
-                    totalStudents,
-                    homeworkCount: recentHomework.length,
+                    classes,
+                    subjects: teacher._count.Subjects,
+                    totalStudents: students,
+                    homeworkCount,
                 },
-                recentHomework,
             },
         });
     } catch (error) {
