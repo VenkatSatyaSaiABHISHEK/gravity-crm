@@ -120,6 +120,34 @@ const getMyAttendance = async (req, res) => {
         const collegeId = req.collegeId;
         const { month, year } = req.query;
 
+        // Demo mode response
+        if (req.demoMode) {
+            console.log('🎯 Demo mode: Returning demo attendance data');
+            const { demoData } = require('../utils/demo-data');
+            
+            const demoAttendance = demoData.attendance.map(a => ({
+                ...a,
+                subject: demoData.subjects.find(s => s.id === a.subjectId)
+            }));
+            
+            const total = demoAttendance.length;
+            const present = demoAttendance.filter(a => a.status === 'present').length;
+            
+            return res.status(200).json({
+                success: true,
+                demo: true,
+                data: {
+                    attendance: demoAttendance,
+                    summary: {
+                        total,
+                        present,
+                        absent: total - present,
+                        percentage: ((present / total) * 100).toFixed(2)
+                    }
+                }
+            });
+        }
+
         const student = await prisma.student.findUnique({
             where: { userId: studentId },
         });
@@ -615,6 +643,56 @@ const getDashboard = async (req, res) => {
     try {
         const studentId = req.user.id;
         const collegeId = req.collegeId;
+
+        // Demo mode response
+        if (req.demoMode) {
+            console.log('🎯 Demo mode: Returning demo student dashboard data');
+            const { demoData } = require('../utils/demo-data');
+            
+            return res.status(200).json({
+                success: true,
+                demo: true,
+                data: {
+                    student: {
+                        ...demoData.students[0],
+                        sclass: demoData.classes[0]
+                    },
+                    stats: {
+                        attendance: {
+                            total: 20,
+                            present: 18,
+                            percentage: 90
+                        },
+                        marks: {
+                            id: '1',
+                            subjectId: '1',
+                            marksObtained: 85,
+                            percentage: 85,
+                            grade: 'A',
+                            subject: { subName: 'Mathematics' },
+                            exam: { examName: 'Mid-term Exam' }
+                        },
+                        fees: {
+                            totalDue: 15000,
+                            pendingCount: 2
+                        },
+                        homework: 5
+                    },
+                    recentMarks: [
+                        { id: '1', subjectId: '1', marksObtained: 85, percentage: 85, grade: 'A', subject: { subName: 'Mathematics' }, exam: { examName: 'Mid-term' }, createdAt: new Date('2026-04-15') },
+                        { id: '2', subjectId: '2', marksObtained: 78, percentage: 78, grade: 'B', subject: { subName: 'Physics' }, exam: { examName: 'Mid-term' }, createdAt: new Date('2026-04-15') },
+                        { id: '3', subjectId: '3', marksObtained: 92, percentage: 92, grade: 'A+', subject: { subName: 'Chemistry' }, exam: { examName: 'Mid-term' }, createdAt: new Date('2026-04-15') },
+                        { id: '4', subjectId: '5', marksObtained: 76, percentage: 76, grade: 'B', subject: { subName: 'English' }, exam: { examName: 'Mid-term' }, createdAt: new Date('2026-04-15') },
+                        { id: '5', subjectId: '6', marksObtained: 88, percentage: 88, grade: 'A', subject: { subName: 'Computer Science' }, exam: { examName: 'Mid-term' }, createdAt: new Date('2026-04-15') }
+                    ],
+                    upcomingHomework: [
+                        { id: '1', title: 'Mathematics Chapter 5', description: 'Complete exercises 1-10', dueDate: new Date('2026-04-25'), subject: { subName: 'Mathematics' } },
+                        { id: '2', title: 'English Essay', description: 'Write essay on environmental protection', dueDate: new Date('2026-04-26'), subject: { subName: 'English' } },
+                        { id: '3', title: 'Science Project', description: 'Prepare model on solar system', dueDate: new Date('2026-04-28'), subject: { subName: 'Physics' } }
+                    ]
+                }
+            });
+        }
 
         const student = await prisma.student.findUnique({
             where: { userId: studentId },

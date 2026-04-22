@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import theme from './theme/theme';
+import DemoModeToggle from './components/DemoModeToggle';
 
 // Modern Pages
 import LandingPage from './pages/LandingPage';
@@ -150,6 +151,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
+        <DemoModeToggle />
         <Routes>
           {/* Dev Test Page */}
           <Route path="/dev-test" element={<DevTestPage />} />

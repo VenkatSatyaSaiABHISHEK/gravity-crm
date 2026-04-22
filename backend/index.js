@@ -164,7 +164,8 @@ async function connectDB() {
     console.log("✓ Connected to PostgreSQL via Prisma");
   } catch (error) {
     console.error("✗ Database Connection Error:", error);
-    process.exit(1);
+    console.log("🔄 Retrying database connection in 5 seconds...");
+    setTimeout(connectDB, 5000);
   }
 }
 connectDB();
