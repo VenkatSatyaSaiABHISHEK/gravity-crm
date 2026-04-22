@@ -34,7 +34,6 @@ import {
   Upload as UploadIcon,
   CloudUpload as CloudUploadIcon,
   Calculate as CalculateIcon,
-  Info as InfoIcon,
 } from '@mui/icons-material';
 import { departments, designations } from '../../../data/hr-data/employees';
 import { SalaryCalculationService } from '../../../services/salaryCalculation';
@@ -47,7 +46,6 @@ import {
   importEmployeesFromCSV,
   selectEmployees,
   selectAttendance,
-  selectHRLoading,
   selectHRError,
   selectImportStatus,
   clearError,
@@ -60,7 +58,6 @@ const EmployeeManagement = ({ isHRRole = false }) => {
   // Redux state
   const employees = useSelector(selectEmployees);
   const attendance = useSelector(selectAttendance);
-  const loading = useSelector(selectHRLoading);
   const error = useSelector(selectHRError);
   const importStatus = useSelector(selectImportStatus);
 
@@ -130,58 +127,6 @@ const EmployeeManagement = ({ isHRRole = false }) => {
       dispatch(resetImportStatus());
     }
   }, [importStatus, dispatch]);
-
-  // Fetch real teacher data on mount
-  const fetchTeachersData = async () => {
-    try {
-      console.log('🔄 EmployeeManagement: Fetching teachers from API...');
-      
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
-      console.log('🔑 Token exists:', !!token);
-      
-      const apiUrl = 'http://localhost:5000/api/hr/teachers';
-      console.log('📍 API URL:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        credentials: 'include',
-      });
-
-      console.log('📡 API Response Status:', response.status);
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ API Result:', result);
-        
-        if (result.success && result.data) {
-          console.log('✅ Loaded', result.data.length, 'real teachers');
-          setLocalEmployees(result.data);
-          setEmployees(result.data);  // Update parent component too
-        } else {
-          console.warn('⚠️ API no data, using initial employees');
-          setLocalEmployees(initialEmployees);
-        }
-      } else {
-        const errorText = await response.text();
-        console.warn('❌ API Error (Status:', response.status, '):', errorText);
-        setLocalEmployees(initialEmployees);
-      }
-    } catch (error) {
-      console.error('❌ Error fetching teachers:', error);
-      setLocalEmployees(initialEmployees);
-    }
-  };
-
-  useEffect(() => {
-    fetchTeachersData();
-    // Only run once on mount, not on every render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const filteredEmployees = employees.filter(
     (emp) =>

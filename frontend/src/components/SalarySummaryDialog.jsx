@@ -12,13 +12,6 @@ import {
   CardContent,
   Divider,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
 } from '@mui/material';
 import {
   Calculate as CalculateIcon,
