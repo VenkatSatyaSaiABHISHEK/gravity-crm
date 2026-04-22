@@ -3,7 +3,6 @@ import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { transportAPI } from "../../../config/api";
 import { demoRoutes } from "../../../utils/demoData";
-import { isDemoMode } from "../../../utils/demoAuth";
 import TransportLayout from "../layout/TransportLayout";
 
 function RoutesPage() {
@@ -13,12 +12,6 @@ function RoutesPage() {
   const loadRoutes = async () => {
     try {
       setError("");
-      
-      // Use demo data in demo mode or if API fails
-      if (isDemoMode()) {
-        setRoutes(demoRoutes);
-        return;
-      }
       
       const response = await transportAPI.getRoutes();
       if (response?.success) {
@@ -55,16 +48,6 @@ function RoutesPage() {
     try {
       setError("");
       
-      if (isDemoMode()) {
-        // Update demo data locally
-        setRoutes(prev => prev.map(r => 
-          r.id === route.id 
-            ? { ...r, routeName, startPoint, endPoint, fee: Number(fee) }
-            : r
-        ));
-        return;
-      }
-      
       await transportAPI.updateRoute(route.id, {
         routeName,
         startPoint,
@@ -84,12 +67,6 @@ function RoutesPage() {
     try {
       setError("");
       
-      if (isDemoMode()) {
-        // Remove from demo data locally
-        setRoutes(prev => prev.filter(r => r.id !== route.id));
-        return;
-      }
-      
       await transportAPI.deleteRoute(route.id);
       await loadRoutes();
     } catch (e) {
@@ -102,11 +79,6 @@ function RoutesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Manage Routes</CardTitle>
-          {isDemoMode() && (
-            <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
-              Demo Mode: Showing sample transport routes data
-            </div>
-          )}
         </CardHeader>
         <CardContent>
           {error ? (
